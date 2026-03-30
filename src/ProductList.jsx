@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './ProductList.css';
 import CartItem from './CartItem';
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addItem } from "./CartSlice";
 
 function ProductList({ onHomeClick }) {
@@ -9,8 +9,15 @@ function ProductList({ onHomeClick }) {
     const dispatch = useDispatch();
 
     const [showCart, setShowCart] = useState(false);
-    const [showPlants, setShowPlants] = useState(false);
-    const [addedToCart, setAddedToCart] = useState({});
+
+    // ✅ GET CART FROM REDUX
+    const cartItems = useSelector((state) => state.cart.items);
+
+    // ✅ TOTAL QUANTITY (for cart badge)
+    const totalQuantity = cartItems.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+    );
 
     const plantsArray = [
         {
@@ -20,13 +27,13 @@ function ProductList({ onHomeClick }) {
                     name: "Snake Plant",
                     image: "https://cdn.pixabay.com/photo/2021/01/22/06/04/snake-plant-5939187_1280.jpg",
                     description: "Produces oxygen at night, improving air quality.",
-                    cost: "$15"
+                    cost: 15
                 },
                 {
                     name: "Spider Plant",
                     image: "https://cdn.pixabay.com/photo/2018/07/11/06/47/chlorophytum-3530413_1280.jpg",
                     description: "Filters formaldehyde and xylene from the air.",
-                    cost: "$12"
+                    cost: 12
                 }
             ]
         },
@@ -37,13 +44,13 @@ function ProductList({ onHomeClick }) {
                     name: "Lavender",
                     image: "https://images.unsplash.com/photo-1611909023032-2d6b3134ecba",
                     description: "Calming scent, used in aromatherapy.",
-                    cost: "$20"
+                    cost: 20
                 },
                 {
                     name: "Jasmine",
                     image: "https://images.unsplash.com/photo-1592729645009-b96d1e63d14b",
                     description: "Sweet fragrance, promotes relaxation.",
-                    cost: "$18"
+                    cost: 18
                 }
             ]
         }
@@ -82,25 +89,14 @@ function ProductList({ onHomeClick }) {
         setShowCart(true);
     };
 
-    const handlePlantsClick = (e) => {
-        e.preventDefault();
-        setShowPlants(true);
-        setShowCart(false);
-    };
-
     const handleContinueShopping = (e) => {
         e.preventDefault();
         setShowCart(false);
     };
 
-    // ✅ ADD TO CART FUNCTION
+    // ✅ ADD TO CART
     const handleAddToCart = (plant) => {
         dispatch(addItem(plant));
-
-        setAddedToCart((prev) => ({
-            ...prev,
-            [plant.name]: true
-        }));
     };
 
     return (
@@ -119,10 +115,21 @@ function ProductList({ onHomeClick }) {
                 </div>
 
                 <div style={styleObjUl}>
-                    <a href="#" onClick={handlePlantsClick} style={styleA}>Plants</a>
+                    <a href="#" style={styleA}>Plants</a>
 
+                    {/* ✅ CART WITH COUNT BADGE */}
                     <a href="#" onClick={handleCartClick} style={styleA}>
                         🛒
+                        <span style={{
+                            marginLeft: "8px",
+                            fontSize: "16px",
+                            background: "red",
+                            borderRadius: "50%",
+                            padding: "4px 8px",
+                            color: "white"
+                        }}>
+                            {totalQuantity}
+                        </span>
                     </a>
                 </div>
             </div>
@@ -137,26 +144,34 @@ function ProductList({ onHomeClick }) {
                             <h2>{categoryObj.category}</h2>
 
                             <div className="plants-container">
-                                {categoryObj.plants.map((plant, i) => (
-                                    <div key={i} className="product-card">
+                                {categoryObj.plants.map((plant) => {
 
-                                        <h3>{plant.name}</h3>
+                                    // ✅ CHECK IF ITEM ALREADY IN CART
+                                    const isAdded = cartItems.some(
+                                        item => item.name === plant.name
+                                    );
 
-                                        <img src={plant.image} alt={plant.name} />
+                                    return (
+                                        <div key={plant.name} className="product-card">
 
-                                        <p>{plant.description}</p>
+                                            <h3>{plant.name}</h3>
 
-                                        <p>{plant.cost}</p>
+                                            <img src={plant.image} alt={plant.name} />
 
-                                        <button
-                                            onClick={() => handleAddToCart(plant)}
-                                            disabled={addedToCart[plant.name]}
-                                        >
-                                            {addedToCart[plant.name] ? "Added" : "Add to Cart"}
-                                        </button>
+                                            <p>{plant.description}</p>
 
-                                    </div>
-                                ))}
+                                            <p>₹{plant.cost}</p>
+
+                                            <button
+                                                onClick={() => handleAddToCart(plant)}
+                                                disabled={isAdded}
+                                            >
+                                                {isAdded ? "Added" : "Add to Cart"}
+                                            </button>
+
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                         </div>
